@@ -135,16 +135,16 @@ predict.mmrm_tmb <- function(
     se <- switch(
       interval,
       # can be NA if there are aliased cols
-      "confidence" = diag(
+      "confidence" = sqrt(diag(
         x_mat_full %*% component(object, "beta_vcov") %*% t(x_mat_full)
-      ),
+      )),
       "none" = NA_real_
     )
     res <- cbind(
       fit = predictions,
       se = se,
-      lwr = predictions - stats::qnorm(1 - level / 2) * se,
-      upr = predictions + stats::qnorm(1 - level / 2) * se
+      lwr = predictions - stats::qnorm((1 + level) / 2) * se,
+      upr = predictions + stats::qnorm((1 + level) / 2) * se
     )
     if (!se.fit) {
       res <- res[, setdiff(colnames(res), "se")]

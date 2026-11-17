@@ -259,6 +259,41 @@ test_that("predict will return on correct order", {
   )
 })
 
+test_that("predict returns normal confidence intervals with standard errors", {
+  cases <- list(
+    list(object = get_mmrm_tmb(), formula = ~ RACE),
+    list(object = get_mmrm_kr(), formula = ~ ARMCD)
+  )
+  for (case in cases) {
+    object <- case$object
+    newdata <- fev_data[c(7, 2, 9, 4), ]
+    design <- stats::model.matrix(case$formula, data = newdata)
+    expected_fit <- drop(design %*% coef(object))
+    expected_se <- sqrt(rowSums((design %*% vcov(object)) * design))
+
+    for (level in c(0, 0.8, 0.95, 0.99, 1)) {
+      expected <- cbind(
+        fit = expected_fit,
+        se = expected_se,
+        lwr = expected_fit - stats::qnorm((1 + level) / 2) * expected_se,
+        upr = expected_fit + stats::qnorm((1 + level) / 2) * expected_se
+      )
+      for (se_fit in c(TRUE, FALSE)) {
+        columns <- if (se_fit) colnames(expected) else c("fit", "lwr", "upr")
+        result <- predict(object, newdata, interval = "confidence", se.fit = se_fit, level = level)
+        expect_equal(result, expected[, columns, drop = FALSE], tolerance = 1e-10)
+
+        without_response <- newdata
+        without_response$FEV1 <- NULL
+        expect_equal(
+          predict(object, without_response, interval = "confidence", se.fit = se_fit, level = level),
+          result
+        )
+      }
+    }
+  }
+})
+
 test_that("predict will return NA if data contains NA in covariates", {
   new_order <- withr::with_seed(12345, sample(seq_len(nrow(fev_data))))
   fit <- get_mmrm()

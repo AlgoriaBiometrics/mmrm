@@ -1,5 +1,9 @@
 # mmrm 0.3.19.9000
 
+### Bug Fixes
+
+- `predict()` now returns standard errors and the requested normal confidence level for unconditional confidence intervals, instead of using variances and an incorrect normal quantile.
+
 ### Miscellaneous
 
 - Satterthwaite degrees of freedom with empirical (sandwich) covariance now keep the per-subject contrast matrix sparse instead of converting it to a dense matrix, substantially speeding up `emmeans()` and `df_md()` calls on models with many subjects and coefficients, such as G-computation fits.
